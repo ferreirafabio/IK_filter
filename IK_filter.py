@@ -78,10 +78,8 @@ def _dismiss_parallel_normals(n1, n2, n3, atol=1e-03):
     for pair in itertools.combinations([n1, n2, n3], 2):
         dots.append(np.dot(pair[0], pair[1]))
 
-    if np.isclose(dots, 1, atol=atol).all() or np.isclose(dots, -1, atol=atol).all():
-        return True
-    else:
-        return False
+    return np.isclose(dots, 1, atol=atol).all() or np.isclose(dots, -1, atol=atol).all()
+
 
 def _dismiss_unreachable(p1, p2, p3, r1, r2, r3, l):
     l1 = r1 + l
@@ -89,25 +87,38 @@ def _dismiss_unreachable(p1, p2, p3, r1, r2, r3, l):
     l3 = r3 + l
     list1 = [p1, p2, p3]
     list2 = [l1, l2, l3]
+    # todo
     raise NotImplementedError
+
+
+def _dismiss_close_contacts(p1, p2, p3, atol=5e-02):
+    """ returns true if all three contact points are within a radius of "atol" meters """
+    return np.all([np.allclose(pair[0], pair[1], atol=atol) for pair in itertools.combinations([p1, p2, p3], 2)])
 
 def IK_filter(p_n_pairs):
     len_before = len(p_n_pairs)
+    print("total contact point tuples before filtering: ", len_before)
     for p_n_pair in p_n_pairs:
         p1, p2, p3, n1, n2, n3 = p_n_pair[3], p_n_pair[4], p_n_pair[5], p_n_pair[6], p_n_pair[7], p_n_pair[8]
         theta1, theta2, theta3, r1, r2, r3 = p_n_pair[9], p_n_pair[10], p_n_pair[11], p_n_pair[12], p_n_pair[13], p_n_pair[14]
 
-        # dismiss all samples for which all three normals point in the same direction
-        #dismiss = _dismiss_parallel_normals(n1, n2, n3)
-        #if dismiss:
-        #    np.delete(p_n_pairs, p_n_pair)
-        #    continue
+        # dismiss samples for which all three normals point in the same direction
+        dismiss = _dismiss_parallel_normals(n1, n2, n3)
+        if dismiss:
+            p_n_pairs.remove(p_n_pair)
+            continue
 
-        dismiss = _dismiss_unreachable(p1, p2, p3, r1, r2, r3, l)
+        # dismiss samples for which the contact points are too close to each other for grasping
+        dismiss = _dismiss_close_contacts(p1, p2, p3)
+        if dismiss:
+            p_n_pairs.remove(p_n_pair)
+            continue
 
+        #dismiss = _dismiss_unreachable(p1, p2, p3, r1, r2, r3, l)
 
     len_after = len(p_n_pairs)
-    print("total removed", len_before-len_after)
+    print("total contact point tuples after filtering: ", len_after)
+    print("removed: ", len_before-len_after)
 
 
 
@@ -124,11 +135,10 @@ if __name__ == '__main__':
     pcn_file = np.load(PATH_PCN)['pcn']
     index_file = np.load(INDEX_FILE_PATH)
 
-    index_file = index_file[:100000]
+    index_file = index_file[:50000]
     # point coordinates and normal coordinates
     p_n_pairs = get_all_p_n_pairs(pcn_file, index_file)
-    #p_n_pair = p_n_pairs[5]
-    #highlight_candidate_in_pc(pcn_file, p_n_pair)
+    #highlight_candidate_in_pc(pcn_file, p_n_pairs[5])
 
 
     for pair in p_n_pairs:
