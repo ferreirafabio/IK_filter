@@ -80,6 +80,46 @@ def _dismiss_parallel_normals(n1, n2, n3, atol=1e-03):
 
     return np.isclose(dots, 1, atol=atol).all() or np.isclose(dots, -1, atol=atol).all()
 
+def _gripper_fingertip_order(p1,p2,p3,n1,n2,n3):
+    normal = np.cross((p1-p2),(p1-p3))
+    n = normal/(np.linalg.norm(normal) + 1e-16)
+    c = (p1 + p2 + p3) / 3.0
+    tip_order = [0,1,2]
+    if np.inner(n1,n2) > 0.8:
+        tip_order[0] = 3
+        if np.cross((n1 - c),(n3 - c))[2] > 0:
+            tip_order[2] = 1
+            tip_order[1] = 2
+        else:
+            tip_order[2] = 2
+            tip_order[1] = 1 
+    if np.inner(n1,n3) > 0.8:
+        tip_order[0] = 2
+        if np.cross((n1 - c),(n2 - c))[2] > 0:
+            tip_order[2] = 1
+            tip_order[1] = 3
+        else:
+            tip_order[2] = 3
+            tip_order[1] = 1 
+ 
+    if np.inner(n2,n3) > 0.8:
+        tip_order[0] = 1
+        if np.cross((n2 - c),(n - c))[2] > 0:
+            tip_order[2] = 2
+            tip_order[1] = 3
+        else:
+            tip_order[2] = 3
+            tip_order[1] = 2 
+    return tip_order
+
+def _dismiss_contacts_normals(n1,n2,n3,theta1,theta2,eps=10):
+    a12 = np.arccos(np.sum(np.array(n1),np.array(n2))) / np.pi * 180.0
+    a13 = np.arccos(np.sum(np.array(n1),np.array(n3))) / np.pi * 180.0
+    if a12 < theta1 + eps and a12 > theta1 - eps and a13 < theta2 + eps and a13 > theta2 - eps:
+      return False
+    else:
+      return True
+
 
 def _dismiss_unreachable(p1, p2, p3, r1, r2, r3, l):
     l1 = r1 + l
@@ -95,25 +135,30 @@ def _dismiss_close_contacts(p1, p2, p3, atol=5e-02):
     """ returns true if all three contact points are within a radius of "atol" meters """
     return np.all([np.allclose(pair[0], pair[1], atol=atol) for pair in itertools.combinations([p1, p2, p3], 2)])
 
-def IK_filter(p_n_pairs):
+def IK_filter(p_n_pairs,theta1=120.0,theta2=120.0):
     len_before = len(p_n_pairs)
     print("total contact point tuples before filtering: ", len_before)
     for p_n_pair in p_n_pairs:
         p1, p2, p3, n1, n2, n3 = p_n_pair[3], p_n_pair[4], p_n_pair[5], p_n_pair[6], p_n_pair[7], p_n_pair[8]
-        theta1, theta2, theta3, r1, r2, r3 = p_n_pair[9], p_n_pair[10], p_n_pair[11], p_n_pair[12], p_n_pair[13], p_n_pair[14]
 
         # dismiss samples for which all three normals point in the same direction
-        dismiss = _dismiss_parallel_normals(n1, n2, n3)
-        if dismiss:
-            p_n_pairs.remove(p_n_pair)
-            continue
+        #dismiss = _dismiss_parallel_normals(n1, n2, n3)
+        #if dismiss:
+        #    p_n_pairs.remove(p_n_pair)
+        #    continue
 
         # dismiss samples for which the contact points are too close to each other for grasping
-        dismiss = _dismiss_close_contacts(p1, p2, p3)
+        #dismiss = _dismiss_close_contacts(p1, p2, p3)
+        #if dismiss:
+        #    p_n_pairs.remove(p_n_pair)
+        #    continue
+
+        fingertip_order = _gripper_fingertip_order(p1,p2,p3,n1,n2,n3)
+        print("fingertip_order",fingertip_order)
+        dismiss = _dismiss_contacts_normals(p_n_pair[fingertip_order[0]+5],p_n_pair[fingertip_order[1]+5],p_n_pair[fingertip_order[2]+5],theta1,theta2)
         if dismiss:
             p_n_pairs.remove(p_n_pair)
-            continue
-
+ 
         #dismiss = _dismiss_unreachable(p1, p2, p3, r1, r2, r3, l)
 
     len_after = len(p_n_pairs)
@@ -139,14 +184,14 @@ if __name__ == '__main__':
     # point coordinates and normal coordinates
     p_n_pairs = get_all_p_n_pairs(pcn_file, index_file)
     #highlight_candidate_in_pc(pcn_file, p_n_pairs[5])
+    print("len",len(p_n_pairs[0]))
 
-
-    for pair in p_n_pairs:
+    #for pair in p_n_pairs:
         # generate thetas
-        thetas = np.random.uniform(min_angle, max_angle, 3)
-        angle_sum = np.sum(thetas)
-        thetas = list((thetas / angle_sum) * total_angle)
-        pair.extend(thetas)
-        pair.extend([r1, r2, r3, l])
+        #thetas = np.random.uniform(min_angle, max_angle, 3)
+        #angle_sum = np.sum(thetas)
+        #thetas = list((thetas / angle_sum) * total_angle)
+        #pair.extend(thetas)
+        #pair.extend([r1, r2, r3, l])
 
     IK_filter(p_n_pairs=p_n_pairs)
