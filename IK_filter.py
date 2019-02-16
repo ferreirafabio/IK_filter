@@ -87,7 +87,7 @@ def _gripper_fingertip_order(p1,p2,p3,n1,n2,n3):
     tip_order = [0,1,2]
     if np.inner(n1,n2) > 0.8:
         tip_order[0] = 3
-        if np.cross((n1 - c),(n3 - c))[2] > 0:
+        if np.cross((p1 - c),(p3 - c))[2] > 0:
             tip_order[2] = 1
             tip_order[1] = 2
         else:
@@ -95,7 +95,7 @@ def _gripper_fingertip_order(p1,p2,p3,n1,n2,n3):
             tip_order[1] = 1 
     if np.inner(n1,n3) > 0.8:
         tip_order[0] = 2
-        if np.cross((n1 - c),(n2 - c))[2] > 0:
+        if np.cross((p1 - c),(p2 - c))[2] > 0:
             tip_order[2] = 1
             tip_order[1] = 3
         else:
@@ -104,7 +104,7 @@ def _gripper_fingertip_order(p1,p2,p3,n1,n2,n3):
  
     if np.inner(n2,n3) > 0.8:
         tip_order[0] = 1
-        if np.cross((n2 - c),(n - c))[2] > 0:
+        if np.cross((p2 - c),(p1 - c))[2] > 0:
             tip_order[2] = 2
             tip_order[1] = 3
         else:
@@ -186,12 +186,12 @@ if __name__ == '__main__':
     #highlight_candidate_in_pc(pcn_file, p_n_pairs[5])
     print("len",len(p_n_pairs[0]))
 
-    #for pair in p_n_pairs:
-        # generate thetas
-        #thetas = np.random.uniform(min_angle, max_angle, 3)
-        #angle_sum = np.sum(thetas)
-        #thetas = list((thetas / angle_sum) * total_angle)
-        #pair.extend(thetas)
-        #pair.extend([r1, r2, r3, l])
+    for pair in p_n_pairs:
+        generate thetas
+        thetas = np.random.uniform(min_angle, max_angle, 3)
+        angle_sum = np.sum(thetas)
+        thetas = list((thetas / angle_sum) * total_angle)
+        pair.extend(thetas)
+        pair.extend([r1, r2, r3, l])
 
     IK_filter(p_n_pairs=p_n_pairs)
