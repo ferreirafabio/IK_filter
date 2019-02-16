@@ -83,7 +83,12 @@ def _dismiss_parallel_normals(n1, n2, n3, atol=1e-03):
     else:
         return False
 
-def _dismiss_unreachable(p1, p2, p3):
+def _dismiss_unreachable(p1, p2, p3, r1, r2, r3, l):
+    l1 = r1 + l
+    l2 = r2 + l
+    l3 = r3 + l
+    list1 = [p1, p2, p3]
+    list2 = [l1, l2, l3]
     raise NotImplementedError
 
 def IK_filter(p_n_pairs):
@@ -93,12 +98,12 @@ def IK_filter(p_n_pairs):
         theta1, theta2, theta3, r1, r2, r3 = p_n_pair[9], p_n_pair[10], p_n_pair[11], p_n_pair[12], p_n_pair[13], p_n_pair[14]
 
         # dismiss all samples for which all three normals point in the same direction
-        dismiss = _dismiss_parallel_normals(n1, n2, n3)
-        if dismiss:
-            np.delete(p_n_pairs, p_n_pair)
-            continue
+        #dismiss = _dismiss_parallel_normals(n1, n2, n3)
+        #if dismiss:
+        #    np.delete(p_n_pairs, p_n_pair)
+        #    continue
 
-        dismiss = _dismiss_unreachable(p1, p2, p3, r1, r2, r3)
+        dismiss = _dismiss_unreachable(p1, p2, p3, r1, r2, r3, l)
 
 
     len_after = len(p_n_pairs)
@@ -111,10 +116,15 @@ if __name__ == '__main__':
     min_angle = 0
     total_angle = 360
 
+    l = 0.1  # assume finger is 10cm long
+    r1 = 0.09
+    r2 = 0.12
+    r3 = 0.11
+
     pcn_file = np.load(PATH_PCN)['pcn']
     index_file = np.load(INDEX_FILE_PATH)
 
-    index_file = index_file[:1000000]
+    index_file = index_file[:100000]
     # point coordinates and normal coordinates
     p_n_pairs = get_all_p_n_pairs(pcn_file, index_file)
     #p_n_pair = p_n_pairs[5]
@@ -126,8 +136,7 @@ if __name__ == '__main__':
         thetas = np.random.uniform(min_angle, max_angle, 3)
         angle_sum = np.sum(thetas)
         thetas = list((thetas / angle_sum) * total_angle)
-        pair = pair.extend(thetas)
-        # generate some r's
-        # todo
+        pair.extend(thetas)
+        pair.extend([r1, r2, r3, l])
 
     IK_filter(p_n_pairs=p_n_pairs)
