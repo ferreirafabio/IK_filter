@@ -1,8 +1,8 @@
 import numpy as np
 from vispy import app, visuals, scene, color
 
-PATH_PCN = "/Volumes/fabioexternal/Downloads/866/866_rho0.303173_azi345.000000_ele89.226024_theta-0.009812_xcam0.000000_ycam0.000000_zcam0.303173_scale0.188282_xdim0.111353_ydim0.146529_zdim0.03974700000_pcn.npz"
-INDEX_FILE_PATH = "/Volumes/fabioexternal/Downloads/866/866_rho0.303173_azi345.000000_ele89.226024_theta-0.009812_xcam0.000000_ycam0.000000_zcam0.303173_scale0.188282_xdim0.111353_ydim0.146529_zdim0.03974700000_par_robotiq3f_full.npy"
+PATH_PCN = "./866_rho0.303173_azi345.000000_ele89.226024_theta-0.009812_xcam0.000000_ycam0.000000_zcam0.303173_scale0.188282_xdim0.111353_ydim0.146529_zdim0.03974700000_pcn.npz"
+INDEX_FILE_PATH = "./866_rho0.303173_azi345.000000_ele89.226024_theta-0.009812_xcam0.000000_ycam0.000000_zcam0.303173_scale0.188282_xdim0.111353_ydim0.146529_zdim0.03974700000_par_robotiq3f_full.npy"
 
 
 def get_all_p_n_pairs():
